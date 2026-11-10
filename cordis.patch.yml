@@ -1,0 +1,17 @@
+- insert:
+    - id: youth-mode
+      name: '@local/youth-mode'
+      config:
+        # 本机音乐列表：绝对路径，或相对 audio/ 目录的文件名；留空则自动扫描 audio/。
+        tracks:
+          - 'Atmozfears - Release (Chill Mix)_HQ.mp3'
+          - 'Hi Noise - We Never_HQ.mp3'
+          - 'memory-reboot.mp3'
+        inChars: 24 # 输入超过这么多字符时开始播放
+        outChars: 0 # 0=模型一开始输出就播；大于 0 则输出达到该字符数再播
+        volume: 0.45
+        idleMs: 1500 # 停止打字多久后开始淡出（本轮运行中不受此限制）
+        fadeInMs: 10000 # 淡入时长（10 秒渐入）
+        fadeOutMs: 10000 # 淡出时长（10 秒长过渡）
+        typeCps: 30 # 命令行打字机速度（字符/秒，只影响显示）
+        mode: auto # auto | off（首次运行的默认值，之后由界面上的 ♪ 开关记忆）

@@ -1,0 +1,47 @@
+{
+  "name": "@local/youth-mode",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Youth mode: a terminal-style conversation tab that logs tool calls, with local BGM driven by input/output length.",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "audio/*"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Of-qinhai/dsh-youth-mode.git"
+  },
+  "homepage": "https://github.com/Of-qinhai/dsh-youth-mode#readme",
+  "bugs": {
+    "url": "https://github.com/Of-qinhai/dsh-youth-mode/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "terminal",
+    "bgm",
+    "typewriter"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Youth mode",
+    "description": "A terminal-style conversation view that logs tool calls only, with local BGM driven by long input or output."
+  }
+}
