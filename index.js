@@ -5,6 +5,7 @@
  * only serves images, so this plugin owns one authenticated exact route that
  * lists and streams the configured local music.
  */
+import { createHash } from 'node:crypto';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { basename, extname, isAbsolute, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -73,7 +74,8 @@ async function listTracks(config) {
     const path = trackPath(entry);
     if (path === undefined || seen.has(path)) continue;
     seen.add(path);
-    tracks.push({ id: tracks.length, name: basename(path), path });
+    const key = createHash('sha256').update(path).digest('hex');
+    tracks.push({ id: tracks.length, key, name: basename(path), path });
   }
   return { ...view, tracks };
 }
@@ -107,28 +109,31 @@ export function apply(ctx, config) {
               fadeOutMs: list.fadeOutMs,
               typeCps: list.typeCps,
               mode: list.mode,
-              tracks: list.tracks.map(({ id, name }) => ({ id, name })),
+              tracks: list.tracks.map(({ id, key, name }) => ({ id, key, name })),
             };
             return new Response(JSON.stringify(body), { headers: JSON_HEADERS });
           }
-          const id = Number(url.searchParams.get('track'));
-          const track = Number.isInteger(id) ? list.tracks.find((item) => item.id === id) : undefined;
+          // A rescan can reorder the list between selecting and loading a song.
+          const key = url.searchParams.get('key');
+          const trackParam = url.searchParams.get('track');
+          const id = trackParam === null ? NaN : Number(trackParam);
+          const track = list.tracks.find((item) => key === null ? item.id === id : item.key === key);
           if (track === undefined) return notFound();
-          let info;
           try {
-            info = await stat(track.path);
+            const info = await stat(track.path);
+            if (!info.isFile()) return notFound();
+            const body = request.method === 'HEAD' ? null : await readFile(track.path);
+            return new Response(body, {
+              headers: {
+                'content-type': MEDIA_TYPES.get(extname(track.path).toLowerCase()) ?? 'application/octet-stream',
+                'content-length': String(body?.byteLength ?? info.size),
+                'cache-control': 'private, max-age=3600',
+                'accept-ranges': 'none',
+              },
+            });
           } catch {
             return notFound();
           }
-          if (!info.isFile()) return notFound();
-          const headers = {
-            'content-type': MEDIA_TYPES.get(extname(track.path).toLowerCase()) ?? 'application/octet-stream',
-            'content-length': String(info.size),
-            'cache-control': 'private, max-age=3600',
-            'accept-ranges': 'none',
-          };
-          if (request.method === 'HEAD') return new Response(null, { headers });
-          return new Response(await readFile(track.path), { headers });
         },
       }),
     'youth-mode: BGM route',

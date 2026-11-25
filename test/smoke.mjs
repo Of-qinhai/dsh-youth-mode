@@ -53,8 +53,27 @@ assert.equal(body.byteLength, fileSize, 'streams the complete file');
 const missing = await route.fetch(new Request('http://127.0.0.1/api/youth-mode-bgm?track=9'));
 assert.equal(missing.status, 404);
 
+host.apply(hostCtx, { tracks: ['memory-reboot.mp3', config.tracks[0].name] });
+const reordered = routes.get('/api/youth-mode-bgm');
+const stableUrl = new URL('http://127.0.0.1/api/youth-mode-bgm');
+stableUrl.searchParams.set('key', config.tracks[0].key);
+const stable = await reordered.fetch(new Request(stableUrl, { method: 'HEAD' }));
+assert.equal(stable.status, 200);
+assert.equal(stable.headers.get('content-length'), String(fileSize), 'the same key selects the same file after reordering');
+assert.equal((await reordered.fetch(new Request('http://127.0.0.1/api/youth-mode-bgm'))).status, 404);
+
 const traversal = await import('../index.js');
 assert.equal(typeof traversal.apply, 'function');
+
+// Empty `tracks` scans audio/ on every request, so dropping a file in is enough.
+host.apply(hostCtx, {});
+const scanned = routes.get('/api/youth-mode-bgm');
+const scannedConfig = await (await scanned.fetch(new Request('http://127.0.0.1/api/youth-mode-bgm?config=1'))).json();
+assert.ok(scannedConfig.tracks.length > 0, 'empty tracks auto-scans audio/');
+assert.ok(
+  scannedConfig.tracks.every((track) => /\.(mp3|m4a|aac|ogg|opus|wav|flac)$/i.test(track.name)),
+  'scanned tracks are audio files',
+);
 
 // -------------------------------------------------------------- Client half
 let registered;
@@ -76,6 +95,7 @@ const React = {
   Fragment: Symbol('fragment'),
   useCallback: (fn) => fn,
   useEffect: () => {},
+  useId: () => 'youth-playlist-test',
   useMemo: (fn) => fn(),
   useRef: (value) => ({ current: value }),
   useState: (value) => [typeof value === 'function' ? value() : value, () => {}],
@@ -111,7 +131,39 @@ const clientCtx = {
 };
 client.apply(clientCtx);
 
-const { commandOf, partialCommand, summarize, buildCalls, buildStreaming, advanceReveal } = client.__test;
+const { commandOf, partialCommand, summarize, buildCalls, buildStreaming, advanceReveal, typewriterStep, detectBeat, updateMeterBand, nextTrack } = client.__test;
+const playlist = [{ id: 0, key: 'first' }, { id: 1, key: 'second' }];
+assert.equal(nextTrack([], null), undefined);
+assert.equal(nextTrack(playlist, null), playlist[0]);
+assert.equal(nextTrack(playlist, 'first'), playlist[1]);
+assert.equal(nextTrack(playlist, 'second'), playlist[0]);
+
+const band = { level: 0, peak: 0, holdUntil: 0 };
+updateMeterBand(band, 12, 0, 40);
+assert.deepEqual(band, { level: 12, peak: 12, holdUntil: 120 }, 'a hit lifts the bar and cap immediately');
+updateMeterBand(band, 2, 100, 100);
+assert.ok(band.level < 5 && band.peak === 12, 'the bar falls promptly while the cap holds');
+updateMeterBand(band, 2, 220, 120);
+assert.ok(band.level === 2 && band.peak < 11 && band.peak > 9, 'the cap starts falling after 120 ms');
+updateMeterBand(band, 14, 240, 20);
+assert.ok(band.level === 14 && band.peak === 14 && band.holdUntil === 360, 'a louder hit resets the cap');
+
+let credit = 0;
+let typed = 0;
+for (let tick = 0; tick < 25; tick += 1) {
+  const step = typewriterStep(30, credit, false);
+  credit = step.credit;
+  typed += step.count;
+}
+assert.equal(typed, 30, 'quiet typing keeps its configured average speed');
+const pulse = { average: 0.001, previous: 0.001, until: -Infinity };
+detectBeat(pulse, 0.001, 0, 16);
+assert.equal(pulse.until, -Infinity, 'steady bass does not count as a beat');
+detectBeat(pulse, 0.005, 16, 16);
+assert.equal(pulse.until, 126, 'a bass transient starts a short pulse');
+assert.equal(typewriterStep(30, 0, true).count, 2, 'beats accelerate the reveal');
+detectBeat(pulse, 0.02, 32, 16);
+assert.equal(pulse.until, 126, 'nearby spikes do not retrigger the pulse');
 assert.equal(partialCommand('{"command":"npm test"}'), 'npm test');
 assert.equal(partialCommand('{"command":"npm te'), 'npm te');
 assert.equal(partialCommand('{"timeoutMs":10}'), '{"timeoutMs":10}');
@@ -205,6 +257,10 @@ function collect(node, output) {
 }
 const nodes = [];
 collect(rendered, nodes);
+const slider = nodes.find((node) => node.type === 'input' && node.props.type === 'range');
+assert.ok(slider, 'playlist contains a native volume slider');
+assert.equal(slider.props.value, 45, 'volume starts at the default before config arrives');
+assert.ok(nodes.some((node) => node.type === 'label' && node.props.htmlFor === slider.props.id));
 const row = nodes.find((node) => node.props && node.props.call && typeof node.type === 'function');
 assert.ok(row, 'renders a tool-call row');
 const rowNodes = [];

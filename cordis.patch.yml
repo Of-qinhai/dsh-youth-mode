@@ -2,11 +2,9 @@
     - id: youth-mode
       name: '@local/youth-mode'
       config:
-        # 本机音乐列表：绝对路径，或相对 audio/ 目录的文件名；留空则自动扫描 audio/。
-        tracks:
-          - 'Atmozfears - Release (Chill Mix)_HQ.mp3'
-          - 'Hi Noise - We Never_HQ.mp3'
-          - 'memory-reboot.mp3'
+        # 音乐目录：audio/ 下的音频自动加载，丢文件进去即可，不用在这里登记。
+        # 只想播其中几首时再写 tracks（相对名或绝对路径）；留空=扫描 audio/。
+        tracks: []
         inChars: 24 # 输入超过这么多字符时开始播放
         outChars: 0 # 0=模型一开始输出就播；大于 0 则输出达到该字符数再播
         volume: 0.45
