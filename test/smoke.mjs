@@ -3,12 +3,21 @@
  * `node test/smoke.mjs` from the package directory.
  */
 import assert from 'node:assert/strict';
-import { statSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
-const root = fileURLToPath(new URL('..', import.meta.url));
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 // ---------------------------------------------------------------- Host half
+const fixtureDir = mkdtempSync(join(tmpdir(), 'youth-mode-smoke-'));
+process.once('exit', () => rmSync(fixtureDir, { recursive: true, force: true }));
+const audioDir = join(fixtureDir, 'audio');
+const hostPath = join(fixtureDir, 'index.mjs');
+const trackName = 'test-track.wav';
+const track = Buffer.from('524946462600000057415645666d74201000000001000100401f0000803e00000200100064617461020000000000', 'hex');
+mkdirSync(audioDir);
+copyFileSync(new URL('../index.js', import.meta.url), hostPath);
+writeFileSync(join(audioDir, trackName), track);
 const routes = new Map();
 const hostCtx = {
   effect: (factory) => factory(),
@@ -22,9 +31,9 @@ const hostCtx = {
   },
 };
 
-const host = await import('../index.js');
+const host = await import(pathToFileURL(hostPath));
 host.apply(hostCtx, {
-  tracks: ['Atmozfears - Release (Chill Mix)_HQ.mp3'],
+  tracks: [trackName],
   inChars: 24,
   outChars: 120,
   volume: 0.45,
@@ -39,41 +48,34 @@ const configResponse = await route.fetch(new Request('http://127.0.0.1/api/youth
 assert.equal(configResponse.status, 200);
 const config = await configResponse.json();
 assert.equal(config.tracks.length, 1, 'one configured track');
-assert.equal(config.tracks[0].name, 'Atmozfears - Release (Chill Mix)_HQ.mp3');
+assert.equal(config.tracks[0].name, trackName);
 assert.equal(config.tracks[0].path, undefined, 'track paths never reach the browser');
 assert.equal(config.inChars, 24);
 
 const audioResponse = await route.fetch(new Request('http://127.0.0.1/api/youth-mode-bgm?track=0'));
 assert.equal(audioResponse.status, 200);
-assert.equal(audioResponse.headers.get('content-type'), 'audio/mpeg');
-const body = new Uint8Array(await audioResponse.arrayBuffer());
-const fileSize = statSync(`${root}audio/Atmozfears - Release (Chill Mix)_HQ.mp3`).size;
-assert.equal(body.byteLength, fileSize, 'streams the complete file');
+assert.equal(audioResponse.headers.get('content-type'), 'audio/wav');
+const body = Buffer.from(await audioResponse.arrayBuffer());
+assert.deepEqual(body, track, 'streams the complete file');
 
 const missing = await route.fetch(new Request('http://127.0.0.1/api/youth-mode-bgm?track=9'));
 assert.equal(missing.status, 404);
 
-host.apply(hostCtx, { tracks: ['memory-reboot.mp3', config.tracks[0].name] });
+host.apply(hostCtx, { tracks: ['missing.wav', trackName] });
 const reordered = routes.get('/api/youth-mode-bgm');
 const stableUrl = new URL('http://127.0.0.1/api/youth-mode-bgm');
 stableUrl.searchParams.set('key', config.tracks[0].key);
 const stable = await reordered.fetch(new Request(stableUrl, { method: 'HEAD' }));
 assert.equal(stable.status, 200);
-assert.equal(stable.headers.get('content-length'), String(fileSize), 'the same key selects the same file after reordering');
+assert.equal(stable.headers.get('content-length'), String(track.length), 'the same key selects the same file after reordering');
 assert.equal((await reordered.fetch(new Request('http://127.0.0.1/api/youth-mode-bgm'))).status, 404);
 
-const traversal = await import('../index.js');
-assert.equal(typeof traversal.apply, 'function');
-
-// Empty `tracks` scans audio/ on every request, so dropping a file in is enough.
+// The directory marker stays in fresh checkouts and must be ignored by the scanner.
+writeFileSync(join(audioDir, '.gitkeep'), '');
 host.apply(hostCtx, {});
 const scanned = routes.get('/api/youth-mode-bgm');
 const scannedConfig = await (await scanned.fetch(new Request('http://127.0.0.1/api/youth-mode-bgm?config=1'))).json();
-assert.ok(scannedConfig.tracks.length > 0, 'empty tracks auto-scans audio/');
-assert.ok(
-  scannedConfig.tracks.every((track) => /\.(mp3|m4a|aac|ogg|opus|wav|flac)$/i.test(track.name)),
-  'scanned tracks are audio files',
-);
+assert.deepEqual(scannedConfig.tracks.map(({ name }) => name), [trackName], 'empty tracks scans audio files only');
 
 // -------------------------------------------------------------- Client half
 let registered;

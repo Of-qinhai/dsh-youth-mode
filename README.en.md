@@ -76,7 +76,7 @@ Configuration lives in the bundle's [cordis.patch.yml](cordis.patch.yml); after 
 
 ### Adding your own music
 
-Drop `.mp3`, `.m4a`, `.aac`, `.ogg`, `.opus`, `.wav`, or `.flac` files into `audio/`. With Youth mode open, refocus the window or wait about 10 seconds for the files to appear in the playlist.
+Bring your own music. Drop `.mp3`, `.m4a`, `.aac`, `.ogg`, `.opus`, `.wav`, or `.flac` files into `audio/`. Git ignores these local files. With Youth mode open, refocus the window or wait about 10 seconds for the files to appear in the playlist.
 
 Set `tracks` only to play a specific selection:
 
@@ -131,6 +131,6 @@ The offline smoke test covers the Host route bytes, config sanitisation, event f
 ├── client.js            # Client half: tab, terminal view, BGM
 ├── icon.svg
 ├── locale/              # Plugin Manager display strings
-├── audio/               # bundled music
+├── audio/               # local music directory
 └── test/smoke.mjs
 ```

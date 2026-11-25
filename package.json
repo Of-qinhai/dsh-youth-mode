@@ -15,7 +15,7 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "audio/*"
+    "audio/.gitkeep"
   ],
   "dsh": {
     "bundle": {

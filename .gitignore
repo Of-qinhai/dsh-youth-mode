@@ -10,3 +10,7 @@ dist/
 .idea/
 .vscode/
 .tmp/
+
+# Local music
+/audio/*
+!/audio/.gitkeep

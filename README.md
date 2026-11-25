@@ -76,7 +76,7 @@ git clone https://github.com/Of-qinhai/dsh-youth-mode.git
 
 ### 添加自己的音乐
 
-把 `.mp3` / `.m4a` / `.aac` / `.ogg` / `.opus` / `.wav` / `.flac` 放进插件的 `audio/` 目录即可。打开青春模式时，切回窗口或等待约 10 秒，新曲目就会出现在歌单里，无需刷新页面。
+音乐由你本地提供。把 `.mp3` / `.m4a` / `.aac` / `.ogg` / `.opus` / `.wav` / `.flac` 放进插件的 `audio/` 目录即可。这些文件会被 Git 忽略。打开青春模式时，切回窗口或等待约 10 秒，新曲目就会出现在歌单里，无需刷新页面。
 
 只想播其中几首时，才需要 `tracks`（相对名或绝对路径）：
 
@@ -131,6 +131,6 @@ node test/smoke.mjs
 ├── client.js            # Client 半：TAB、终端视图、BGM
 ├── icon.svg
 ├── locale/              # 插件管理器展示文案
-├── audio/               # 内置音乐
+├── audio/               # 本地音乐目录
 └── test/smoke.mjs
 ```
