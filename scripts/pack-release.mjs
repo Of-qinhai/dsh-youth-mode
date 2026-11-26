@@ -33,9 +33,11 @@ try {
   writeFileSync(join(staging, 'package.json'), `${JSON.stringify(release, null, 2)}\n`);
 
   mkdirSync(output, { recursive: true });
-  const [pack] = JSON.parse(execFileSync(process.execPath, [
+  const result = JSON.parse(execFileSync(process.execPath, [
     npmCli, 'pack', '--ignore-scripts', '--json', '--pack-destination', output,
   ], { cwd: staging, encoding: 'utf8' }));
+  const pack = Array.isArray(result) ? result[0] : result[name];
+  assert.equal(pack?.name, name, 'npm must pack the public bundle');
   console.log(join(output, pack.filename));
 } finally {
   rmSync(staging, { recursive: true, force: true });
