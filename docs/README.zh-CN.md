@@ -85,11 +85,11 @@
 
 ## 原理
 
-- **Host 半**（[index.js](index.js)）提供需要登录态的音乐接口。
+- **Host 半**（[index.js](../index.js)）提供需要登录态的音乐接口。
   - `/api/youth-mode-bgm?config=1` 返回曲目的序号、稳定标识、文件名及播放配置。
   - `/api/youth-mode-bgm?key=…` 返回音频文件。目录重新排序时，标识仍指向同一首曲目。
   - 向 `/api/youth-mode-bgm/open-folder` 发送 POST 请求会在 DSH 宿主机器上打开插件的音乐目录。
-- **Client 半**（[client.js](client.js)）通过 `conversation.view` 插槽注册 TAB，直接折叠会话事件窗口（`tool/call` / `tool/result` / `assistant/live-chunk`），不订阅模型、不写会话日志。
+- **Client 半**（[client.js](../client.js)）通过 `conversation.view` 插槽注册 TAB，直接折叠会话事件窗口（`tool/call` / `tool/result` / `assistant/live-chunk`），不订阅模型、不写会话日志。
 - BGM 是浏览器 `<audio>`，音量用定时器做淡入淡出；歌曲元素在插件实例内复用，切 TAB 不会重新选歌。
 
 ## 已知限制

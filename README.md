@@ -2,7 +2,7 @@
 
 `@ohmynpm/dsh-youth-mode` adds a terminal-style view for tool calls and command lines in DSH conversations. The player uses your own music, with a live spectrum and a typewriter that follows bass hits.
 
-[简体中文](https://github.com/Of-qinhai/dsh-youth-mode/blob/main/README.zh-CN.md) · [npm](https://www.npmjs.com/package/@ohmynpm/dsh-youth-mode)
+[简体中文](https://github.com/Of-qinhai/dsh-youth-mode/blob/main/docs/README.zh-CN.md) · [npm](https://www.npmjs.com/package/@ohmynpm/dsh-youth-mode)
 
 ![Youth Mode’s live audio spectrum and current track](https://raw.githubusercontent.com/Of-qinhai/dsh-youth-mode/main/docs/images/spectrum.webp)
 
