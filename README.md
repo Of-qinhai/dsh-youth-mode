@@ -4,11 +4,7 @@
 
 [简体中文](https://github.com/Of-qinhai/dsh-youth-mode/blob/main/README.zh-CN.md) · [npm](https://www.npmjs.com/package/@ohmynpm/dsh-youth-mode)
 
-```
-[18:55:39] ~/dsh-workspace-tmp $ npm test                    ✓ 4.4s
-[18:57:42] ~/dsh-workspace-tmp $ python3 - <<'PY'  (+32 lines)  ✓ 0.1s
-[--:--:--] ~/dsh-workspace-tmp $ █
-```
+![Youth Mode’s live audio spectrum and current track](https://raw.githubusercontent.com/Of-qinhai/dsh-youth-mode/main/docs/images/spectrum.webp)
 
 ## Quick start
 
@@ -18,6 +14,8 @@
 4. Return to DSH or wait about 10 seconds. Select a track or press Play. The volume slider is at the bottom of the playlist, and the browser remembers your setting.
 
 You can also ask DSH to install and enable `@ohmynpm/dsh-youth-mode`. To install from GitHub or a `.tgz` archive, enter the repository URL or the archive’s absolute path in **Add plugin**. [GitHub repository](https://github.com/Of-qinhai/dsh-youth-mode)
+
+![Youth Mode in DSH with the playlist, playback controls, and volume slider open](https://raw.githubusercontent.com/Of-qinhai/dsh-youth-mode/main/docs/images/playlist.webp)
 
 ## Features
 

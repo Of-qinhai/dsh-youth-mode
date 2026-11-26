@@ -4,11 +4,7 @@
 
 [English](https://github.com/Of-qinhai/dsh-youth-mode/blob/main/README.md) · [npm](https://www.npmjs.com/package/@ohmynpm/dsh-youth-mode)
 
-```
-[18:55:39] ~/dsh-workspace-tmp $ npm test                    ✓ 4.4s
-[18:57:42] ~/dsh-workspace-tmp $ python3 - <<'PY'  (+32 行)  ✓ 0.1s
-[--:--:--] ~/dsh-workspace-tmp $ █
-```
+![青春模式的实时音频频谱和当前曲目](https://raw.githubusercontent.com/Of-qinhai/dsh-youth-mode/main/docs/images/spectrum.webp)
 
 ## 快速开始
 
@@ -18,6 +14,8 @@
 4. 切回 DSH 或等约 10 秒。曲目出现后，点击曲名或播放按钮试听。音量滑杆在歌单底部，设置会保存在当前浏览器里。
 
 也可以对 DSH 说「帮我安装并启用 `@ohmynpm/dsh-youth-mode`」。如果从 GitHub 或 `.tgz` 安装，在 **Add plugin** 中填写仓库 URL 或安装包的绝对路径即可。 [GitHub 仓库](https://github.com/Of-qinhai/dsh-youth-mode)
+
+![DSH 青春模式中的歌单、播放控制和音量滑杆](https://raw.githubusercontent.com/Of-qinhai/dsh-youth-mode/main/docs/images/playlist.webp)
 
 ## 功能
 
