@@ -1087,7 +1087,13 @@ window.__ModuleLoader__.load({
                   className: 'ym-playlist-song',
                   'aria-current': current || undefined,
                   title: song.name,
-                  onClick: () => switchTrack(song),
+                  onClick: (event) => {
+                    switchTrack(song);
+                    const panel = event.currentTarget.closest('.ym-playlist-panel');
+                    if (nativePopover) panel.hidePopover();
+                    else panel.parentElement.open = false;
+                    panel.previousElementSibling.focus();
+                  },
                 },
                 h('span', { className: 'ym-song-icon', 'aria-hidden': true }, current && isPlaying ? '▶' : '♪'),
                 h('span', null, trackTitle(song.name)),
