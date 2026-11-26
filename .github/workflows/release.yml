@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install --global npm@latest
+      - run: npm test
+      - name: Verify tag and build the release package
+        id: pack
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          test "$TAG" = "v$(node -p 'require("./package.json").version')"
+          package=$(npm run --silent pack:release)
+          printf 'package=%s\n' "$package" >> "$GITHUB_OUTPUT"
+      - name: Publish via npm Trusted Publishing
+        env:
+          PACKAGE: ${{ steps.pack.outputs.package }}
+        run: npm publish "$PACKAGE" --access public --provenance

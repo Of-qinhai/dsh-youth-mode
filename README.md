@@ -1,136 +1,139 @@
-# dsh-youth-mode
+# DSH Youth Mode
 
-给 DSH 对话加一个「青春模式」TAB：终端风格的命令日志 + 本机 BGM。
+`@ohmynpm/dsh-youth-mode` adds a terminal-style view for tool calls and command lines in DSH conversations. The player uses your own music, with a live spectrum and a typewriter that follows bass hits.
 
-默认对话方式完全不变，只是多一个视图；切过去就像开了一个 CMD 窗口，只显示模型执行的工具调用和命令行。
-
-[English](README.en.md)
+[简体中文](https://github.com/Of-qinhai/dsh-youth-mode/blob/main/README.zh-CN.md) · [npm](https://www.npmjs.com/package/@ohmynpm/dsh-youth-mode)
 
 ```
 [18:55:39] ~/dsh-workspace-tmp $ npm test                    ✓ 4.4s
-[18:57:42] ~/dsh-workspace-tmp $ python3 - <<'PY'  (+32 行)  ✓ 0.1s
+[18:57:42] ~/dsh-workspace-tmp $ python3 - <<'PY'  (+32 lines)  ✓ 0.1s
 [--:--:--] ~/dsh-workspace-tmp $ █
 ```
 
-## 功能
+## Quick start
 
-- **青春模式 TAB**：在原来的对话旁边新增一个视图，默认仍停在普通对话。
-- **只显示命令**：`[时间] ~/路径 $ 命令` 的终端 transcript；多行/超长命令压成首行 + `(+N 行)`。
-- **打字机**：命令按 `typeCps` 逐字显示，检测到明显的低频鼓点时短暂加速。开启系统「减少动态效果」后直接显示完整命令。
-- **自动滚动**：新命令和流式参数出现时始终贴底。
-- **BGM**：
-  - 自动读取歌单。首次进入且 BGM 开启时，从列表第一首开始播放；
-  - 点底栏曲名打开歌单，可播放、暂停、按列表顺序切到下一首，或开关 BGM；
-  - 手动暂停后，从原位置手动继续。自动播放模式下，长输入或模型输出可恢复因空闲或回合结束而淡出的音乐。
-- **状态栏**：运行状态、命令数、当前曲目与播放控制。中间的 20 列分段频谱随 BGM 实时变化，峰值块停留片刻后缓慢回落。
+1. In DSH Desktop or the Web UI, open **Plugins → Add plugin** and enter `@ohmynpm/dsh-youth-mode`.
+2. Choose **Install → Enable now**, open a conversation, and select **Youth mode** at the top. If the tab is missing, refresh the interface and reopen the conversation.
+3. Click **Choose a track** or the current track in the bottom bar. In the playlist, click the **folder icon** to the left of Play and add music to the folder that opens.
+4. Return to DSH or wait about 10 seconds. Select a track or press Play. The volume slider is at the bottom of the playlist, and the browser remembers your setting.
 
-## 安装
+You can also ask DSH to install and enable `@ohmynpm/dsh-youth-mode`. To install from GitHub or a `.tgz` archive, enter the repository URL or the archive’s absolute path in **Add plugin**. [GitHub repository](https://github.com/Of-qinhai/dsh-youth-mode)
 
-### 在 DSH 里一键安装（推荐）
+## Features
 
-1. 打开 DSH，点击侧边栏 **Plugins**。
-2. 点 **Add plugin**，填入仓库地址：
+- **Youth mode tab**: a new conversation view next to the normal chat; the default stays on chat.
+- **Commands only**: a terminal transcript in the form `[time] ~/path $ command`; multi-line or huge commands collapse to the first line plus `(+N lines)`.
+- **Typewriter**: commands reveal at `typeCps`, with a brief speed boost on pronounced bass hits. A system preference for reduced motion shows commands immediately.
+- **Auto-scroll**: always follows new commands and streamed arguments.
+- **BGM**:
+  - The playlist loads automatically. With BGM enabled, the first visit starts at the first track.
+  - Click the track name to open the playlist with play, pause, next track, and BGM controls. Next follows playlist order.
+  - Resume a manually paused track from the same position. With automatic BGM enabled, typing or model output can resume music that faded out after inactivity or the end of a turn.
+- **Status bar**: run state, command count, current track, and playback controls. A 20-column segmented spectrum follows the music. Peak markers linger at the top of each hit and then fall slowly.
 
-   ```text
-   https://github.com/Of-qinhai/dsh-youth-mode
-   ```
+## Music and configuration
 
-3. 点 **Install**，完成后点 **Enable now**。
-4. 刷新页面，随便发一条消息，标题栏出现 **青春模式** TAB。
+### Scan the music folder automatically
 
-> 需要 DSH 的 Web 界面与插件管理（Plugin Manager）。仓库自带已构建好的 `client.js`，安装时不需要额外构建。
+The package ships with an empty `audio/` folder. It accepts `.mp3`, `.m4a`, `.aac`, `.ogg`, `.opus`, `.wav`, and `.flac` files, sorted by filename. Put the files in the directory opened by the playlist’s folder button. For remote DSH sessions, this directory is on the host machine.
 
-### 让 DSH 助手帮你装
+### Choose tracks and their order
 
-直接对 DSH 说：
+To keep music in a permanent location or play a specific set, add this override to your active DSH profile’s `cordis.patch.yml`. On macOS and Linux, the desktop profile is usually in `~/.dsh/profiles/desktop/`.
 
-```text
-帮我安装插件 https://github.com/Of-qinhai/dsh-youth-mode 并启用
+```yaml
+- id: youth-mode
+  name: '@ohmynpm/dsh-youth-mode'
+  config:
+    tracks:
+      - '/Users/your-name/Music/Youth Mode/intro.mp3'
+      - '/Users/your-name/Music/Youth Mode/chill.flac'
+    volume: 0.45
 ```
 
-助手会通过 `plugin_manager` 完成安装和启用。
+Replace the example paths with real absolute paths on the DSH host. Relative filenames resolve inside the plugin’s `audio/` folder. An explicit list plays in the order you enter, and `tracks: []` restores automatic scanning. A saved slider setting takes precedence over `volume`. If you installed a local checkout or installed from GitHub, use `@local/youth-mode` for `name`.
 
-### 本地目录安装（开发用）
+### Other options
+
+See the [bundle configuration](https://github.com/Of-qinhai/dsh-youth-mode/blob/main/cordis.patch.yml) for defaults. If changes do not take effect, reopen DSH.
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `tracks` | empty (scan `audio/`) | Optional selection of tracks. Relative names resolve under `audio/`. Absolute paths also work. |
+| `inChars` | `24` | Input length that starts playback |
+| `outChars` | `0` | Output length that starts playback; `0` = as soon as the model streams |
+| `volume` | `0.45` | Target volume (0–1) |
+| `idleMs` | `1500` | Silence before fading out |
+| `fadeInMs` | `10000` | Fade-in duration (enforced minimum of 10 s) |
+| `fadeOutMs` | `10000` | Fade-out duration |
+| `typeCps` | `30` | Typewriter speed (chars/sec) |
+| `mode` | `auto` | Default mode for the first run; the `♪` toggle remembers afterwards |
+
+### Troubleshooting
+
+- **The playlist is empty.** Check the folder opened by the playlist button, or check the paths in `tracks`. Return to DSH and wait for the playlist to refresh.
+- **A track is listed but silent.** Press Play and check the BGM toggle and volume. Your browser may require an interaction before autoplay starts.
+- **Tracks disappeared after an update.** The plugin’s installation folder can change with each version. For music you want to keep across updates, store it in your own music folder and reference it through `tracks`.
+
+## Usage
+
+| Action | Behaviour |
+| --- | --- |
+| Switch to the Youth mode tab | Shows the terminal log (history appears complete, no typing replay) |
+| Send after typing a long prompt | BGM starts immediately and runs through the turn |
+| Track name in the bottom bar | Open the playlist and select a track to play. |
+| Top of the playlist | Open the music folder in the file manager, play or pause, skip to the next track in order, or toggle BGM. |
+| Bottom of the playlist | Adjust the volume. The browser remembers your setting. |
+
+## How it works
+
+- **Host half** ([index.js](index.js)) provides authenticated music endpoints.
+  - `/api/youth-mode-bgm?config=1` returns the track list, including display names and stable identifiers, and the playback settings.
+  - `/api/youth-mode-bgm?key=…` returns the audio file. The identifier survives playlist reordering.
+  - `POST /api/youth-mode-bgm/open-folder` opens the plugin’s music folder on the DSH host.
+- **Client half** ([client.js](client.js)) registers the tab through the `conversation.view` slot and folds the session event window (`tool/call`, `tool/result`, `assistant/live-chunk`) directly. It never subscribes to the model or writes session events.
+- BGM is a browser `<audio>` element with timer-based volume ramps; the element is reused across tab switches.
+
+## Known limitations
+
+- The audio route does not support Range: the first load or a track switch downloads the whole file, so a slow file gives a short silence before the fade-in.
+- If the browser blocks autoplay, the first click or key press retries playback.
+- Multi-line commands show only the first line plus a line count, not the full heredoc.
+- History is shown complete when the tab opens; no typing replay.
+- Depends on DSH client internals (`session.eventSource`, the `conversation.view` slot, exact `/api` routes); a DSH upgrade may require follow-up changes.
+
+## Releasing
+
+Run `npm test` and `npm run pack:release` on Node.js 22 or later. The latter creates a shareable `dist/ohmynpm-dsh-youth-mode-<version>.tgz`. The package starts with an empty music folder, and local tracks stay in the development checkout.
+
+A maintainer with `@ohmynpm` publishing access uploads the first version. Then configure npm Trusted Publishing for `release.yml` in `Of-qinhai/dsh-youth-mode`. For subsequent releases, push a `v<version>` tag matching the package version to run the tests and publish through GitHub Actions.
+
+## Development
+
+### Local directory (for development)
 
 ```bash
 git clone https://github.com/Of-qinhai/dsh-youth-mode.git
 ```
 
-然后在 **Plugins → Add plugin** 里填这个目录的**绝对路径**，安装并启用。本地目录安装是软链接，改完代码刷新页面即可。
-
-## 配置
-
-配置在插件包的 [cordis.patch.yml](cordis.patch.yml)，修改后需要让 DSH 重新组合（重启 DSH 最稳）：
-
-| 键 | 默认 | 说明 |
-| --- | --- | --- |
-| `tracks` | 空（自动扫描 `audio/`） | 只播指定曲目时才填；相对名从 `audio/` 读，也可写绝对路径 |
-| `inChars` | `24` | 输入达到多少字符后开始播放 |
-| `outChars` | `0` | 输出达到多少字符开始；`0` = 模型一开始输出就播 |
-| `volume` | `0.45` | 目标音量（0–1） |
-| `idleMs` | `1500` | 停止打字多久后开始淡出 |
-| `fadeInMs` | `10000` | 渐入时长（最低按 10 秒执行） |
-| `fadeOutMs` | `10000` | 渐出时长 |
-| `typeCps` | `30` | 打字机速度（字符/秒） |
-| `mode` | `auto` | 首次运行的默认模式；之后由界面上的 `♪` 记忆 |
-
-### 添加自己的音乐
-
-音乐由你本地提供。把 `.mp3` / `.m4a` / `.aac` / `.ogg` / `.opus` / `.wav` / `.flac` 放进插件的 `audio/` 目录即可。这些文件会被 Git 忽略。打开青春模式时，切回窗口或等待约 10 秒，新曲目就会出现在歌单里，无需刷新页面。
-
-只想播其中几首时，才需要 `tracks`（相对名或绝对路径）：
-
-```yaml
-tracks:
-  - 'my-song.mp3'
-```
-
-音频只由 DSH 宿主读取，页面拿到的是序号和显示名，绝对路径不会进浏览器。
-
-## 使用
-
-| 操作 | 行为 |
-| --- | --- |
-| 切到「青春模式」TAB | 显示终端日志（历史命令直接完整显示，不回放打字） |
-| 长输入后发送 | BGM 立刻开始，贯穿本轮 |
-| 底栏曲名 | 打开歌单，点击曲名直接播放 |
-| 歌单顶部 | 播放／暂停，按顺序切到下一首，或开关 BGM |
-| 歌单底部 | 调节音量，设置会保存在当前浏览器中 |
-
-## 原理
-
-- **Host 半**（[index.js](index.js)）注册一条需要登录态的路由 `/api/youth-mode-bgm`：
-  - `?config=1` 返回曲目的序号、稳定标识、文件名及播放配置；
-  - `?key=…` 返回音频文件。目录重新排序时，标识仍指向同一首曲目。
-- **Client 半**（[client.js](client.js)）通过 `conversation.view` 插槽注册 TAB，直接折叠会话事件窗口（`tool/call` / `tool/result` / `assistant/live-chunk`），不订阅模型、不写会话日志。
-- BGM 是浏览器 `<audio>`，音量用定时器做淡入淡出；歌曲元素在插件实例内复用，切 TAB 不会重新选歌。
-
-## 已知限制
-
-- 音频路由不支持 Range：切歌/首次加载会整首下载，慢的时候有一小段静音，之后才渐入。
-- 如果浏览器拦截自动播放，点击或按键后会重试首播。
-- 多行命令只显示首行摘要，不显示完整 heredoc。
-- 历史命令在打开 TAB 时直接完整显示，不做打字回放。
-- 依赖 DSH 客户端内部接口（`session.eventSource`、`conversation.view` 插槽、`/api` 精确路由），DSH 升级后可能需要跟随调整。
-
-## 开发
+Then use **Plugins → Add plugin** with the **absolute path** of that directory, install and enable. Local installs are symlinked, so code changes show up after a page refresh.
 
 ```bash
 node test/smoke.mjs
 ```
 
-离线冒烟测试覆盖：Host 路由返回音频字节、配置脱敏、事件折叠、流式命令拼接、打字机推进。
+The offline smoke test covers the Host route bytes, config sanitisation, event folding, streamed command assembly and typewriter advancement.
 
-## 目录
+## Layout
 
 ```text
 .
-├── package.json         # bundle 清单（dsh.bundle.patch + dsh.client）
-├── cordis.patch.yml     # 插件行与默认配置
-├── index.js             # Host 半：/api/youth-mode-bgm
-├── client.js            # Client 半：TAB、终端视图、BGM
+├── package.json         # bundle manifest (dsh.bundle.patch + dsh.client)
+├── cordis.patch.yml     # plugin row and default config
+├── index.js             # Host half: /api/youth-mode-bgm
+├── client.js            # Client half: tab, terminal view, BGM
 ├── icon.svg
-├── locale/              # 插件管理器展示文案
-├── audio/               # 本地音乐目录
+├── locale/              # Plugin Manager display strings
+├── audio/               # local music directory
 └── test/smoke.mjs
 ```

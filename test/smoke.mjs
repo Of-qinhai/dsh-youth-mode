@@ -3,9 +3,13 @@
  * `node test/smoke.mjs` from the package directory.
  */
 import assert from 'node:assert/strict';
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import childProcess from 'node:child_process';
+import { EventEmitter } from 'node:events';
+import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { mock } from 'node:test';
 import { pathToFileURL } from 'node:url';
 
 // ---------------------------------------------------------------- Host half
@@ -76,6 +80,33 @@ host.apply(hostCtx, {});
 const scanned = routes.get('/api/youth-mode-bgm');
 const scannedConfig = await (await scanned.fetch(new Request('http://127.0.0.1/api/youth-mode-bgm?config=1'))).json();
 assert.deepEqual(scannedConfig.tracks.map(({ name }) => name), [trackName], 'empty tracks scans audio files only');
+
+const folderRoute = routes.get('/api/youth-mode-bgm/open-folder');
+assert.deepEqual(folderRoute.methods, ['POST']);
+const opener = mock.method(childProcess, 'spawn', () => {
+  const child = new EventEmitter();
+  child.unref = () => {};
+  queueMicrotask(() => child.emit('spawn'));
+  return child;
+});
+syncBuiltinESMExports();
+try {
+  // DSH checks the real Origin before dispatching with a synthetic request URL.
+  const origin = 'http://127.0.0.1:54306';
+  const request = (headers) => new Request(`http://dsh.internal${folderRoute.path}?path=/other`, { method: 'POST', headers });
+  const action = { 'x-youth-mode-action': 'open-folder' };
+  assert.equal((await folderRoute.fetch(request({ origin }))).status, 403);
+  assert.equal(opener.mock.callCount(), 0);
+  const supported = ['darwin', 'linux', 'win32'].includes(process.platform);
+  assert.equal((await folderRoute.fetch(request({ ...action, origin }))).status, supported ? 204 : 501);
+  if (supported) {
+    assert.deepEqual(opener.mock.calls[0].arguments[1], [realpathSync(audioDir)], 'the browser cannot choose a different path');
+    assert.equal((await folderRoute.fetch(request(action))).status, 204, 'the desktop proxy omits Origin');
+  }
+} finally {
+  opener.mock.restore();
+  syncBuiltinESMExports();
+}
 
 // -------------------------------------------------------------- Client half
 let registered;
@@ -259,6 +290,9 @@ function collect(node, output) {
 }
 const nodes = [];
 collect(rendered, nodes);
+const player = nodes.find((node) => node.props.className === 'ym-player');
+assert.equal(player.children[0].props['aria-label'], 'bgm.openFolder', 'opens the music folder before the playback control');
+assert.equal(player.children[1].props.className, 'ym-playback');
 const slider = nodes.find((node) => node.type === 'input' && node.props.type === 'range');
 assert.ok(slider, 'playlist contains a native volume slider');
 assert.equal(slider.props.value, 45, 'volume starts at the default before config arrives');

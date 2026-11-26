@@ -1,7 +1,11 @@
 {
   "name": "@local/youth-mode",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
+  "scripts": {
+    "test": "node test/smoke.mjs",
+    "pack:release": "node scripts/pack-release.mjs"
+  },
   "description": "Youth mode: a terminal-style conversation tab that logs tool calls, with local BGM driven by input/output length.",
   "exports": {
     ".": "./index.js",
@@ -15,6 +19,7 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
+    "README.zh-CN.md",
     "audio/.gitkeep"
   ],
   "dsh": {

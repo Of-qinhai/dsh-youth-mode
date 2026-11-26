@@ -2,17 +2,23 @@
  * Host half of the youth-mode bundle.
  *
  * The browser cannot read file:// URLs, and the built-in /plugins asset route
- * only serves images, so this plugin owns one authenticated exact route that
- * lists and streams the configured local music.
+ * only serves images, so this plugin owns authenticated routes for local music.
  */
+import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { once } from 'node:events';
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { basename, extname, isAbsolute, resolve, sep } from 'node:path';
+import { basename, extname, isAbsolute, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const inject = ['connection'];
 
 const AUDIO_DIR = fileURLToPath(new URL('./audio', import.meta.url));
+const FOLDER_OPENER = {
+  darwin: '/usr/bin/open',
+  linux: 'xdg-open',
+  win32: join(process.env.SystemRoot ?? 'C:\\Windows', 'explorer.exe'),
+}[process.platform];
 
 const MEDIA_TYPES = new Map([
   ['.mp3', 'audio/mpeg'],
@@ -137,5 +143,30 @@ export function apply(ctx, config) {
         },
       }),
     'youth-mode: BGM route',
+  );
+  ctx.effect(
+    () =>
+      ctx.connection.fetch.register({
+        path: '/api/youth-mode-bgm/open-folder',
+        methods: ['POST'],
+        requestBody: 'buffered',
+        async fetch(request) {
+          // Connection authenticates the caller and validates Origin before rewriting the request URL.
+          if (request.headers.get('x-youth-mode-action') !== 'open-folder') {
+            return new Response(null, { status: 403 });
+          }
+          if (!FOLDER_OPENER) return new Response(null, { status: 501 });
+          try {
+            if (!(await stat(AUDIO_DIR)).isDirectory()) return notFound();
+            const child = spawn(FOLDER_OPENER, [AUDIO_DIR], { detached: true, stdio: 'ignore', windowsHide: true });
+            await once(child, 'spawn');
+            child.unref();
+            return new Response(null, { status: 204 });
+          } catch {
+            return new Response(null, { status: 500 });
+          }
+        },
+      }),
+    'youth-mode: open audio folder',
   );
 }

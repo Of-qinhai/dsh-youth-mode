@@ -44,6 +44,8 @@ window.__ModuleLoader__.load({
       'bgm.next': '下一首',
       'bgm.play': '播放',
       'bgm.pause': '暂停',
+      'bgm.openFolder': '打开音乐目录',
+      'bgm.openFolderError': '无法打开音乐目录。',
       'bgm.playlist': '歌单',
       'bgm.volume': '音量',
       'bgm.loading': '正在读取曲目…',
@@ -66,6 +68,8 @@ window.__ModuleLoader__.load({
       'bgm.next': 'Next track',
       'bgm.play': 'Play',
       'bgm.pause': 'Pause',
+      'bgm.openFolder': 'Open music folder',
+      'bgm.openFolderError': 'Could not open the music folder.',
       'bgm.playlist': 'Playlist',
       'bgm.volume': 'Volume',
       'bgm.loading': 'Loading tracks…',
@@ -113,6 +117,8 @@ window.__ModuleLoader__.load({
 .ym-player .ym-playback:hover:not(:disabled){background:#b4ffd6;border-color:#b4ffd6}
 .ym-player button[aria-pressed=true]{background:#1c3a2e;border-color:#51876c;color:var(--ym-accent)}
 .ym-icon-pause{box-sizing:border-box;width:9px;height:10px;border-inline:3px solid currentColor}
+.ym-icon-folder{position:relative;box-sizing:border-box;width:14px;height:10px;margin-block-start:3px;border:1.5px solid currentColor;border-radius:2px}
+.ym-icon-folder::before{content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-1.5px;box-sizing:border-box;width:7px;height:4px;border:1.5px solid currentColor;border-block-end:0;border-radius:2px 2px 0 0}
 .ym-transport>.ym-track,.ym-playlist-fallback>.ym-track{box-sizing:border-box;display:flex;flex:1;align-items:center;gap:7px;min-inline-size:0;min-block-size:30px;padding:0 7px;border:1px solid transparent;border-radius:4px;background:transparent;color:#d4e2ea;font:inherit;text-align:start;cursor:pointer;list-style:none}
 .ym-track .ym-track-name{min-inline-size:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ym-track::after{content:"";flex:none;width:4px;height:4px;border:solid currentColor;border-width:1px 1px 0 0;transform:translateY(1px) rotate(-45deg);opacity:.7}
@@ -132,6 +138,7 @@ window.__ModuleLoader__.load({
 .ym-song-icon{inline-size:13px;flex:none;color:#94acb2}
 .ym-playlist-song[aria-current=true] .ym-song-icon{color:var(--ym-accent)}
 .ym-playlist-empty{margin:0;padding:16px 14px;color:var(--ym-muted)}
+.ym-folder-status:not(:empty){padding:8px 14px;color:#fca5a5}
 .ym-volume{flex:none;display:grid;grid-template-columns:auto minmax(0,1fr) 4ch;align-items:center;gap:10px;padding:8px 14px;border-block-start:1px solid #34474e}
 .ym-volume input{inline-size:100%;min-block-size:30px;margin:0;accent-color:var(--ym-accent);cursor:pointer}
 @supports not (accent-color:auto){
@@ -558,6 +565,7 @@ window.__ModuleLoader__.load({
       const [pausedByUser, setPausedByUser] = useState(bgm.pausedByUser);
       const [track, setTrack] = useState(() => ({ id: bgm.trackId, name: bgm.trackName }));
       const [active, setActive] = useState(false);
+      const [folderStatus, setFolderStatus] = useState('idle');
       const [savedVolume, setSavedVolume] = useState(readVolume);
       const volume = savedVolume ?? config?.volume ?? 0.45;
       const volumeRef = useRef(volume);
@@ -995,6 +1003,20 @@ window.__ModuleLoader__.load({
       const trackName = isPlaying ? track.name : selected?.name ?? track.name;
       const trackLabel = trackName ? trackTitle(trackName) : t('bgm.choose');
       const playbackLabel = t(isPlaying ? 'bgm.pause' : 'bgm.play');
+      const openFolderLabel = t('bgm.openFolder');
+      const openFolder = async () => {
+        setFolderStatus('opening');
+        try {
+          const response = await fetch(`${API}/open-folder`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'x-youth-mode-action': 'open-folder' },
+          });
+          setFolderStatus(response.status === 204 ? 'idle' : 'error');
+        } catch {
+          setFolderStatus('error');
+        }
+      };
       const togglePlayback = () => {
         if (!isPlaying) {
           switchTrack(selected);
@@ -1023,6 +1045,13 @@ window.__ModuleLoader__.load({
           h(
             'div',
             { className: 'ym-player' },
+            h('button', {
+              type: 'button',
+              onClick: openFolder,
+              disabled: folderStatus === 'opening',
+              title: openFolderLabel,
+              'aria-label': openFolderLabel,
+            }, h('span', { className: 'ym-icon-folder', 'aria-hidden': true })),
             h('button', {
               type: 'button',
               className: 'ym-playback',
@@ -1065,6 +1094,7 @@ window.__ModuleLoader__.load({
               ));
             }))
           : h('p', { className: 'ym-playlist-empty' }, t(config === null ? 'bgm.loading' : 'bgm.empty')),
+        h('div', { className: 'ym-folder-status', role: 'status' }, folderStatus === 'error' ? t('bgm.openFolderError') : ''),
         h(
           'div',
           { className: 'ym-volume' },
