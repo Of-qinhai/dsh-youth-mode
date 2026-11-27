@@ -27,7 +27,7 @@ You can also ask DSH to install and enable `@ohmynpm/dsh-youth-mode`. To install
   - The playlist loads automatically. With BGM enabled, the first visit starts at the first track.
   - Click the track name to open the playlist with play, pause, next track, and BGM controls. Next follows playlist order.
   - Resume a manually paused track from the same position. With automatic BGM enabled, typing or model output can resume music that faded out after inactivity or the end of a turn.
-- **Status bar**: run state, command count, current track, and playback controls. A 20-column spectrum leaves room for drum hits even when the mix stays loud. The five blue-green bass columns rise and fall quickly, while their peak markers linger briefly.
+- **Music bar**: a 28-column spectrum and a translucent playback meter behind the track name. The seven blue-green bass columns rise and fall with drum hits even in loud mixes, and their peak markers linger briefly.
 
 ## Music and configuration
 

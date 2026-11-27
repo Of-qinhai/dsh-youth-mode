@@ -19,9 +19,9 @@ window.__ModuleLoader__.load({
     // One element per plugin instance: remounting the tab must not restart the track.
     const bgm = { audio: null, graph: null, loaded: false, trackName: '', trackId: null, pausedByUser: false };
     const PLAYLIST_REFRESH_MS = 10000;
-    const SPECTRUM_BANDS = 20;
+    const SPECTRUM_BANDS = 28;
     const SPECTRUM_LEVELS = 14;
-    const BASS_BANDS = 5;
+    const BASS_BANDS = 7;
     const SPECTRUM_FLOOR_DB = -78;
     const PEAK_HOLD_MS = 120;
     const PEAK_FALL_PER_SECOND = 18;
@@ -37,9 +37,7 @@ window.__ModuleLoader__.load({
     const ZH = {
       'view.label': '青春模式',
       'bar.title': 'youth://cmd',
-      running: '运行中',
-      idle: '空闲',
-      calls: '条命令',
+      'bgm.progress': '歌曲播放进度',
       empty: '等待工具调用……',
       'bgm.choose': '选择曲目',
       'bgm.toggle': '切换 BGM 自动播放',
@@ -61,9 +59,7 @@ window.__ModuleLoader__.load({
     const EN = {
       'view.label': 'Youth mode',
       'bar.title': 'youth://cmd',
-      running: 'running',
-      idle: 'idle',
-      calls: 'cmds',
+      'bgm.progress': 'Track playback progress',
       empty: 'waiting for tool calls…',
       'bgm.choose': 'Choose a track',
       'bgm.toggle': 'Toggle automatic BGM',
@@ -101,15 +97,13 @@ window.__ModuleLoader__.load({
 .ym-meta.running{color:#f4c47a}
 .ym-err{margin:0 0 5px;padding-left:18px;color:#fca5a5;font-size:11.5px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:120px;overflow:hidden}
 .ym-cursor{display:inline-block;width:7px;height:12px;margin-left:3px;background:var(--ym-accent);box-shadow:0 0 8px #8ff8be70;vertical-align:-1px;animation:ym-blink 1.1s steps(2,start) infinite}
-.ym-foot{flex:none;display:grid;grid-template-columns:auto minmax(0,1fr) minmax(185px,30%);align-items:center;gap:16px;padding:11px 14px;border-top:1px solid #33444e;background:linear-gradient(180deg,#182329,#10191e);font-size:11px}
-.ym-status{display:flex;align-items:center;gap:8px;white-space:nowrap;color:var(--ym-muted)}
-.ym-dot{flex:none;width:6px;height:6px;background:#829ba4}
-.ym-dot.busy{background:var(--ym-accent);box-shadow:0 0 9px #8ff8be90}
-.ym-state{color:#d8e6ed}
-.ym-state.busy{color:var(--ym-accent)}
-.ym-count{padding-inline-start:8px;border-inline-start:1px solid #3a494f;font-variant-numeric:tabular-nums}
+.ym-foot{flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(185px,28%);align-items:center;gap:16px;padding:11px 14px;border-top:1px solid #33444e;background:linear-gradient(180deg,#182329,#10191e);font-size:11px}
 .ym-spectrum{box-sizing:border-box;display:block;inline-size:100%;block-size:72px;min-inline-size:0;padding:6px 10px;border:1px solid #304148;border-radius:4px;background:linear-gradient(180deg,#0c161a,#091014);contain:paint}
-.ym-transport{display:flex;align-items:center;min-inline-size:0;gap:6px}
+.ym-transport{position:relative;display:flex;align-items:center;min-inline-size:0}
+.ym-track-progress{position:absolute;inset:1px;inline-size:calc(100% - 2px);block-size:calc(100% - 2px);appearance:none;border:0 solid;border-radius:3px;overflow:clip;background:transparent;pointer-events:none;--ym-progress-fill:repeating-linear-gradient(90deg,transparent 0 7px,#09141855 7px 8px),linear-gradient(90deg,#327a6d40,#73efbe38)}
+.ym-track-progress::-webkit-progress-bar{background:transparent}
+.ym-track-progress::-webkit-progress-value{background:var(--ym-progress-fill);border-inline-end:1px solid #8ff8be88}
+.ym-track-progress::-moz-progress-bar{background:var(--ym-progress-fill);border-inline-end:1px solid #8ff8be88}
 .ym-player{display:flex;align-items:center;gap:5px}
 .ym-player button{display:grid;place-items:center;min-block-size:30px;min-inline-size:30px;padding:0;border:1px solid #455961;border-radius:4px;background:#18252c;color:#d4e2ea;font:inherit;cursor:pointer}
 .ym-player button:hover:not(:disabled){background:#263b42;border-color:#8aadb3}
@@ -121,11 +115,11 @@ window.__ModuleLoader__.load({
 .ym-icon-pause{box-sizing:border-box;width:9px;height:10px;border-inline:3px solid currentColor}
 .ym-icon-folder{position:relative;box-sizing:border-box;width:14px;height:10px;margin-block-start:3px;border:1.5px solid currentColor;border-radius:2px}
 .ym-icon-folder::before{content:"";position:absolute;inset-block-start:-4px;inset-inline-start:-1.5px;box-sizing:border-box;width:7px;height:4px;border:1.5px solid currentColor;border-block-end:0;border-radius:2px 2px 0 0}
-.ym-transport>.ym-track,.ym-playlist-fallback>.ym-track{box-sizing:border-box;display:flex;flex:1;align-items:center;gap:7px;min-inline-size:0;min-block-size:30px;padding:0 7px;border:1px solid transparent;border-radius:4px;background:transparent;color:#d4e2ea;font:inherit;text-align:start;cursor:pointer;list-style:none}
+.ym-transport>.ym-track,.ym-playlist-fallback>.ym-track{position:relative;box-sizing:border-box;display:flex;flex:1;align-items:center;gap:7px;min-inline-size:0;min-block-size:38px;padding:0 10px;border:1px solid #33474d;border-radius:4px;background:transparent;color:#d4e2ea;font:inherit;text-align:start;cursor:pointer;list-style:none}
 .ym-track .ym-track-name{min-inline-size:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ym-track::after{content:"";flex:none;width:4px;height:4px;border:solid currentColor;border-width:1px 1px 0 0;transform:translateY(1px) rotate(-45deg);opacity:.7}
 .ym-playlist-fallback>.ym-track::-webkit-details-marker{display:none}
-.ym-transport>.ym-track:hover:not(:disabled),.ym-playlist-fallback>.ym-track:hover,.ym-track:has(+ :popover-open),.ym-playlist-fallback[open]>.ym-track{background:#263b42;border-color:#455961;color:var(--ym-accent)}
+.ym-transport>.ym-track:hover:not(:disabled),.ym-playlist-fallback>.ym-track:hover,.ym-track:has(+ :popover-open),.ym-playlist-fallback[open]>.ym-track{background:#263b4266;border-color:#708e92;color:var(--ym-accent)}
 .ym-playlist-panel{box-sizing:border-box;inline-size:min(360px,calc(100vw - 24px));max-block-size:min(360px,calc(100dvh - 24px));overflow:hidden;padding:0;border:1px solid #455d68;border-radius:9px;background:linear-gradient(145deg,#1b2b31,#111b20 50%);color:#e5edf3;box-shadow:0 16px 40px #05080bb3;color-scheme:dark;font:inherit;font-size:12px}
 .ym-playlist-panel:is(:popover-open),.ym-playlist-fallback[open]>.ym-playlist-panel{display:flex;flex-direction:column}
 .ym-playlist-panel[popover]:not(:popover-open){display:none}
@@ -152,8 +146,7 @@ window.__ModuleLoader__.load({
 .ym-playlist-fallback{position:relative;flex:1;min-inline-size:0}
 .ym-playlist-fallback>.ym-playlist-panel{position:absolute;inset-block-end:calc(100% + 8px);inset-inline-end:0;max-inline-size:min(360px,65vw);max-block-size:40dvh;z-index:1}
 @keyframes ym-blink{0%,100%{opacity:1}50%{opacity:0}}
-@container (max-width:560px){.ym-foot{grid-template-columns:auto minmax(0,1fr);gap:8px;padding:8px 10px}.ym-spectrum{grid-column:1/-1;grid-row:1;block-size:50px}}
-@container (max-width:340px){.ym-foot{grid-template-columns:minmax(0,1fr)}.ym-spectrum{grid-column:1}}
+@container (max-width:560px){.ym-foot{grid-template-columns:minmax(0,1fr);gap:8px;padding:8px 10px}.ym-spectrum{block-size:50px}}
 @media (pointer:coarse){.ym-player button,.ym-transport>.ym-track,.ym-playlist-fallback>.ym-track{min-block-size:40px;min-inline-size:40px}}
 @media (prefers-reduced-motion:reduce){.ym-cursor{animation:none}}
 `;
@@ -376,7 +369,7 @@ window.__ModuleLoader__.load({
       context.resume().then(() => {
         if (bgm.graph !== graph || graph.analyser) return;
         const analyser = context.createAnalyser();
-        analyser.fftSize = 2048;
+        analyser.fftSize = 4096;
         analyser.smoothingTimeConstant = 0.12;
         analyser.connect(context.destination);
         context.createMediaElementSource(audio).connect(analyser);
@@ -607,6 +600,7 @@ window.__ModuleLoader__.load({
       const typingAliveRef = useRef(null);
       const autoStartedRef = useRef(false);
       const canvasRef = useRef(null);
+      const progressRef = useRef(null);
       const beatUntilRef = useRef(0);
       const [revealTick, bump] = useState(0);
       const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia?.(REDUCED_MOTION).matches ?? false);
@@ -1016,6 +1010,27 @@ window.__ModuleLoader__.load({
       const selectedId = isPlaying ? track.id : (selected?.key ?? selected?.id);
       const trackName = isPlaying ? track.name : selected?.name ?? track.name;
       const trackLabel = trackName ? trackTitle(trackName) : t('bgm.choose');
+      useEffect(() => {
+        const progress = progressRef.current;
+        const audio = bgm.audio;
+        const sync = () => {
+          const duration = audio?.duration;
+          const ready = audio && bgm.trackId === selectedId && !audio.error &&
+            audio.readyState >= audio.HAVE_METADATA && Number.isFinite(duration) && duration > 0;
+          progress.hidden = !ready;
+          if (ready) {
+            progress.max = duration;
+            progress.value = audio.currentTime;
+          }
+        };
+        sync();
+        if (!audio) return;
+        const events = ['loadedmetadata', 'durationchange', 'timeupdate', 'pause', 'emptied', 'error'];
+        for (const event of events) audio.addEventListener(event, sync);
+        return () => {
+          for (const event of events) audio.removeEventListener(event, sync);
+        };
+      }, [selectedId, track]);
       const playbackLabel = t(isPlaying ? 'bgm.pause' : 'bgm.play');
       const openFolderLabel = t('bgm.openFolder');
       const openFolder = async () => {
@@ -1210,17 +1225,11 @@ window.__ModuleLoader__.load({
         h(
           'div',
           { className: 'ym-foot' },
-          h(
-            'div',
-            { className: 'ym-status' },
-            h('span', { className: `ym-dot${summary.running ? ' busy' : ''}`, 'aria-hidden': true }),
-            h('span', { className: `ym-state${summary.running ? ' busy' : ''}` }, summary.running ? t('running') : t('idle')),
-            h('span', { className: 'ym-count' }, `${calls.length} ${t('calls')}`),
-          ),
-          h('canvas', { className: 'ym-spectrum', ref: canvasRef, width: 840, height: 112, 'aria-hidden': true }),
+          h('canvas', { className: 'ym-spectrum', ref: canvasRef, width: SPECTRUM_BANDS * 42, height: 112, 'aria-hidden': true }),
           h(
             'div',
             { className: 'ym-transport' },
+            h('progress', { className: 'ym-track-progress', ref: progressRef, hidden: true, value: 0, 'aria-label': t('bgm.progress') }),
             nativePopover
               ? h(React.Fragment, null, trackTrigger, playlist)
               : h('details', { className: 'ym-playlist-fallback' }, trackTrigger, playlist),
