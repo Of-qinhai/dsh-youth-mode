@@ -164,7 +164,7 @@ const clientCtx = {
 };
 client.apply(clientCtx);
 
-const { commandOf, partialCommand, summarize, buildCalls, buildStreaming, advanceReveal, typewriterStep, detectBeat, updateMeterBand, nextTrack } = client.__test;
+const { commandOf, partialCommand, summarize, buildCalls, buildStreaming, advanceReveal, typewriterStep, detectBeat, updateMeterBand, spectrumTarget, nextTrack } = client.__test;
 const playlist = [{ id: 0, key: 'first' }, { id: 1, key: 'second' }];
 assert.equal(nextTrack([], null), undefined);
 assert.equal(nextTrack(playlist, null), playlist[0]);
@@ -180,6 +180,23 @@ updateMeterBand(band, 2, 220, 120);
 assert.ok(band.level === 2 && band.peak < 11 && band.peak > 9, 'the cap starts falling after 120 ms');
 updateMeterBand(band, 14, 240, 20);
 assert.ok(band.level === 14 && band.peak === 14 && band.holdUntil === 360, 'a louder hit resets the cap');
+
+const bassBand = { level: 0, peak: 0, holdUntil: 0 };
+let meterTime = 0;
+function sampleBass(decibels) {
+  meterTime += 20;
+  updateMeterBand(bassBand, spectrumTarget(bassBand, decibels, 0, 20), meterTime, 20);
+  return bassBand.level;
+}
+assert.equal(sampleBass(-Infinity), 0, 'silent FFT bins stay unlit');
+for (let frame = 0; frame < 100; frame += 1) sampleBass(-24);
+for (let beat = 0; beat < 8; beat += 1) {
+  const before = sampleBass(-24);
+  const hit = sampleBass(-18);
+  assert.ok(hit - before >= 7, 'each kick clears seven segments even over loud sustained bass');
+  for (let frame = 0; frame < 12; frame += 1) sampleBass(-24);
+  assert.ok(bassBand.level <= 4, 'the bar drops before the next kick');
+}
 
 let credit = 0;
 let typed = 0;

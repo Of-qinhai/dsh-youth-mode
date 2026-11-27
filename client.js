@@ -21,9 +21,11 @@ window.__ModuleLoader__.load({
     const PLAYLIST_REFRESH_MS = 10000;
     const SPECTRUM_BANDS = 20;
     const SPECTRUM_LEVELS = 14;
+    const BASS_BANDS = 5;
+    const SPECTRUM_FLOOR_DB = -78;
     const PEAK_HOLD_MS = 120;
     const PEAK_FALL_PER_SECOND = 18;
-    const BAR_FALL_PER_SECOND = 72;
+    const BAR_FALL_PER_SECOND = 112;
     const TYPE_TICK_MS = 40;
     const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
     const EMPTY_SNAPSHOT = Object.freeze({ entries: [], revision: 0, change: { kind: 'replace', entries: [] }, hasMore: false });
@@ -106,7 +108,7 @@ window.__ModuleLoader__.load({
 .ym-state{color:#d8e6ed}
 .ym-state.busy{color:var(--ym-accent)}
 .ym-count{padding-inline-start:8px;border-inline-start:1px solid #3a494f;font-variant-numeric:tabular-nums}
-.ym-spectrum{box-sizing:border-box;display:block;inline-size:100%;block-size:64px;min-inline-size:0;padding:6px 10px;border:1px solid #304148;border-radius:4px;background:linear-gradient(180deg,#0c161a,#091014);contain:paint}
+.ym-spectrum{box-sizing:border-box;display:block;inline-size:100%;block-size:72px;min-inline-size:0;padding:6px 10px;border:1px solid #304148;border-radius:4px;background:linear-gradient(180deg,#0c161a,#091014);contain:paint}
 .ym-transport{display:flex;align-items:center;min-inline-size:0;gap:6px}
 .ym-player{display:flex;align-items:center;gap:5px}
 .ym-player button{display:grid;place-items:center;min-block-size:30px;min-inline-size:30px;padding:0;border:1px solid #455961;border-radius:4px;background:#18252c;color:#d4e2ea;font:inherit;cursor:pointer}
@@ -413,7 +415,20 @@ window.__ModuleLoader__.load({
       }
     }
 
+    function spectrumTarget(band, decibels, index, elapsed) {
+      const compensated = Math.max(SPECTRUM_FLOOR_DB, decibels + 7 * index / (SPECTRUM_BANDS - 1));
+      const average = band.average ?? compensated;
+      band.average = Math.max(compensated - 12, average + (compensated - average) * (1 - Math.exp(-elapsed / 650)));
+      const strength = Math.min(1, (compensated - SPECTRUM_FLOOR_DB) / 52);
+      const bassWeight = Math.max(0, 1 - index / BASS_BANDS);
+      // Keep headroom for hits even when the sustained part is already loud.
+      const body = strength ** 1.2 * (9 - 5 * bassWeight);
+      const transient = Math.max(0, compensated - average - 0.5) * strength * (0.7 + 1.25 * bassWeight);
+      return Math.min(SPECTRUM_LEVELS, body + transient);
+    }
+
     const METER_COLORS = ['#27694f', '#3fa782', '#62d7ab', '#93e6be', '#c1e6a8', '#e7be79'];
+    const BASS_COLORS = ['#205663', '#2e8999', '#55bdc4', '#85ddda', '#e7be79', '#ffd998'];
 
     function paintSpectrum(context, bands) {
       const { width, height } = context.canvas;
@@ -425,8 +440,9 @@ window.__ModuleLoader__.load({
         const { level, peak } = bands[index];
         const x = Math.round(index * column + (column - blockWidth) / 2);
         const lit = Math.round(level);
+        const colors = index < BASS_BANDS ? BASS_COLORS : METER_COLORS;
         for (let step = 0; step < SPECTRUM_LEVELS; step += 1) {
-          const color = METER_COLORS[Math.floor(step * METER_COLORS.length / SPECTRUM_LEVELS)];
+          const color = colors[Math.floor(step * colors.length / SPECTRUM_LEVELS)];
           context.fillStyle = step < lit ? color : '#172429';
           context.fillRect(x, height - (step + 1) * row + 2, blockWidth, row - 2);
         }
@@ -848,10 +864,8 @@ window.__ModuleLoader__.load({
             const end = Math.max(start + 1, edges[band + 1]);
             let peak = -Infinity;
             for (let bin = start; bin < end; bin += 1) peak = Math.max(peak, spectrum[bin]);
-            // Compensate for quieter treble so the upper bands stay legible.
-            const compensated = peak + 7 * band / (SPECTRUM_BANDS - 1);
-            const strength = Math.min(1, Math.max(0, (compensated + 70) / 41));
-            updateMeterBand(bands[band], strength ** 1.2 * SPECTRUM_LEVELS, now, elapsed);
+            const meter = bands[band];
+            updateMeterBand(meter, spectrumTarget(meter, peak, band, elapsed), now, elapsed);
           }
           paintSpectrum(context, bands);
         };
@@ -1218,7 +1232,7 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'sessions', 'locale'],
       // Exposed for the offline smoke test; the Loader ignores extra fields.
-      __test: { commandOf, partialCommand, summarize, buildCalls, buildStreaming, advanceReveal, typewriterStep, detectBeat, updateMeterBand, nextTrack },
+      __test: { commandOf, partialCommand, summarize, buildCalls, buildStreaming, advanceReveal, typewriterStep, detectBeat, updateMeterBand, spectrumTarget, nextTrack },
       apply(ctx) {
         ctx.effect(() => () => {
           bgm.audio?.pause();
